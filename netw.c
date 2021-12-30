@@ -1,24 +1,26 @@
 #include <unistd.h>
 #include <stdlib.h>
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
+
 #include <errno.h>
 #include <string.h>
+
+// Socket
+#include <sys/types.h>
+#include <sys/socket.h>
+
+// Internet
 #include <arpa/inet.h>
-#include <fcntl.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
+#include <netdb.h>
 
 #define BUFFER_SIZE 20
 
 char * _http_request
 ( 
 	int sock,
-	char * url_path,
-	char ** parameters,
-	int parameter_count
+	const char * host,
+	const char * url_path,
+	const char ** parameters,
+	const int parameter_count
 )
 
 {
@@ -29,6 +31,7 @@ char * _http_request
 	char * _draft_get = malloc(1);
 	char * buffer = malloc( 1 );
 	char * response;
+
 	
 
 
@@ -38,8 +41,14 @@ char * _http_request
 		+ strlen( url_path )
 		+ strlen( " " )
 	   	+ strlen( "HTTP/1.1" )
+	   	+ strlen( "\r\n" )
+		+ strlen( "Host: " )
+		+ strlen( host )
+	   	+ strlen( "\r\n" )
+	   	+ strlen( "User-Agent: custom" )
+	   	+ strlen( "\r\n" )
 	   	+ strlen( "Accept: */*" )
-	   	+ strlen( "\n" )
+		+ strlen( "\r\n" )
 	);
 
 	_draft_get = realloc( _draft_get, _draft_length );
@@ -48,9 +57,14 @@ char * _http_request
 	strcat( _draft_get, url_path );
 	strcat( _draft_get, " " );
 	strcat( _draft_get, "HTTP/1.1" );
-	strcat( _draft_get, "\n" );
+	strcat( _draft_get, "\r\n" );
+	strcat( _draft_get, "Host: " );
+	strcat( _draft_get, host );
+	strcat( _draft_get, "\r\n" );
+	strcat( _draft_get, "User-Agent: custom" );
+	strcat( _draft_get, "\r\n" );
 	strcat( _draft_get, "Accept: */*" );
-	strcat( _draft_get, "\n" );
+	strcat( _draft_get, "\r\n" );
 
 	if ( !( parameters == NULL ) ) 
 	{
@@ -59,32 +73,33 @@ char * _http_request
 			_draft_length += strlen( parameters[i] ) + 1;
 			_draft_get = realloc( _draft_get, _draft_length );
 			strcat( _draft_get, parameters[i] );
-			strcat( _draft_get, "\n" );
+			strcat( _draft_get, "\r\n" );
 		}
 	}
 
 	_draft_length = strlen( _draft_get );
 	if ( ( _total_sent = write( sock, _draft_get, _draft_length ) ) < _draft_length )
 	{
-		printf( "Could only send %d bytes out of %d\n", _total_sent, _draft_length );
+		// printf( "Could only send %d bytes out of %d\r\n", _total_sent, _draft_length );
 		return NULL;
 	}
 	free( _draft_get );
+	write( sock, "\n\n", 2 );
 
 	strcpy( buffer, "" );
 	for (char cur[ BUFFER_SIZE ];;)
 	{
-		buffer = realloc( buffer, _total_read + BUFFER_SIZE );
 		memset( cur, 0x0, BUFFER_SIZE );
 		cycle_read = read( sock, cur, BUFFER_SIZE );
-		strcat( buffer, cur );
-		_total_read += cycle_read;
+		buffer = realloc( buffer, strlen( buffer ) + cycle_read + 1);
+		strncat( buffer, cur, BUFFER_SIZE );
 		if ( cycle_read < BUFFER_SIZE ) 
 		{
 			break;
 		}
 
 	}
+	_total_read = strlen( buffer );
 	response = malloc( _total_read );
 	strcpy( response, buffer );
 	return response;

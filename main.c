@@ -1,53 +1,49 @@
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
+// Socket
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <netdb.h>
+
+// Internet
+#include <arpa/inet.h>
+
+// STD
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+
 #include <errno.h>
 #include <string.h>
-#include <arpa/inet.h>
-#include <fcntl.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
+
+// Local
 #include "netw.h"
 #include "args.h"
+#include "http.h"
 
 
 
 
-
-int main( int argc, char ** argv ) 
+int main
+(
+	 int argc,
+	 char ** argv
+)
 {
 	char * addr_s;
-	if (argc > 1) addr_s = argv[1];
-	else addr_s = "192.168.1.37";
-	int err;
+	int port;
+	char * path = "";
+	char * response;
+	const int param_count = 4;
+	const char * params[4] = { "A: 1", "B: 2", "C: 3", "D: 4" };
 
-	char acquired_address_s[INET_ADDRSTRLEN];
-	int sockfd = socket( AF_INET, SOCK_STREAM, 0 );
+	addr_s = "127.0.0.1";
+	port = 80;
+	
+	if ( argc > 1 ) addr_s = argv[1];
+	if ( argc > 2 ) port = atoi( argv[2] );
 
-
-	struct sockaddr addr = getsockaddrbyname( addr_s, 8080 );
-
-	inet_ntop( AF_INET, &( * ( struct sockaddr_in * ) &addr ).sin_addr, acquired_address_s, INET_ADDRSTRLEN );
-	printf( "%s is at %s\n", addr_s, acquired_address_s );
-
-
-	if ( ( err = connect( sockfd, &addr, sizeof( addr ) ) ) < 0 )
-	{
-		printf( "Could not connect: %s\n", strerror( err )  );
-		return err;
-	}
-
-
-
-	char * response = _http_request( sockfd, "abc/bcd", NULL, 0 );
-
-	printf( "%s\n", response );
-
+	response = http_request( addr_s, port, path, params, param_count );
+	printf( "%s", response );
 	free( response );
-	close( sockfd );
 
 }
+
 

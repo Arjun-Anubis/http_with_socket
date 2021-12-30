@@ -1,13 +1,14 @@
 struct sockaddr getsockaddrbyname
 (
-	char[ INET_ADDRSTRLEN ],
-	int port
+	const char[ INET_ADDRSTRLEN ],
+	const int port
 );
 
 char * _http_request
 (
  	int sock, 
-	char * url_path,
-	char ** get_parameters,
-	int parameter_count
+	const char * host,
+	const char * url_path,
+	const char ** get_parameters,
+	const int parameter_count
 );

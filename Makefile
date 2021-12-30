@@ -1,7 +1,7 @@
 CC= gcc
 CFLAGS= -g -Wall
 LIBS= -lm
-SOURCES= args.c netw.c main.c 
+SOURCES= args.c netw.c http.c main.c 
 OBJECTS = $(SOURCES:.c=.o)
 TARGET= main
 
